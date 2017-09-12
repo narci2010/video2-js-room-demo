@@ -1,0 +1,278 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>video-chat-room</title>
+    <style>
+        #videos {
+            text-align: center;
+        }
+        .videos-item {
+            width: 480px;
+            height: 360px;
+            display: inline-block;
+            position: relative;
+            margin-left: 20px;
+            margin-right: 20px;
+        }
+
+        .videos-item .btn {
+            padding: 0;
+            display: none;
+            width: 160px;
+            height: 36px;
+            text-align: center;
+            line-height: 36px;
+            border-radius: 3px;
+            border: 1px solid #e6501e;
+            background-color: transparent;
+            color: #e6501e;
+            position: absolute;
+            z-index: 100;
+            cursor: pointer;
+            left: 50%;
+            margin-left: -80px;
+            margin-top: 80px;
+
+        }
+
+        .videos-item:hover .btn{
+            display: inline-block;
+        }
+
+
+    </style>
+</head>
+
+<body style="background:#333;color:#fff;text-align: center;">
+<div id="getAppid-div" style="text-align:center;margin-top:150px;">
+    <input id="roomId" type="" style="width:200px;height:35px;" name="" placeholder='请输入房间号'>
+    <button id="login" onclick="join()" style="height:35px;width:70px;border: 1px solid;border-radius: 3px;cursor:pointer">进入</button>
+</div>
+<div id="operateBtn" hidden >
+    <!--<a id="publish" onclick="publish(localStream)" style="padding-right: 10px;cursor: pointer;">发布本地流</a>
+    <a id="unpublish" onclick="unpublish(localStream);" style="padding-right: 10px;cursor: pointer;">停止发布</a>
+    <a id="subscribe" onclick="subscribe(remoteStream)" style="padding-right: 10px;cursor: pointer;">订阅远端流</a>
+    <a id="unsubscribe" onclick="unsubscribe(remoteStream);" style="padding-right: 10px;cursor: pointer;">停止订阅</a-->
+    <a id="startRecord" onclick="startRecord()" style="padding-right: 10px;cursor: pointer;">开始录制</a>
+    <a id="stopRecord" onclick="stopRecord()" style="padding-right: 10px;cursor: pointer;">结束录制</a>
+    <a id="disconnect" onclick="disconnect()" style="padding-right: 10px;cursor: pointer;">离开会议</a>
+    <!--<button onclick="disconnect()" style="height:35px;width:70px;border: 1px solid;border-radius: 3px;cursor:pointer">退出</button>-->
+</div>
+<div id="videos" style="text-align:center;margin:0px auto;margin-top:60px;" hidden="">
+    <div class="videos-item">
+        <button class="btn">拍照上传</button>
+        <video id="local" style="border:1px solid #fff;width:480px;height:360px;" autoplay="" muted=""></video>
+    </div>
+    <div class="videos-item" style="display: none">
+        <button class="btn">拍照上传</button>
+        <video id="remote" style="border:1px solid #fff;width:480px;height:360px;" autoplay=""></video>
+    </div>
+</div>
+<script src = "https://cdn.wilddog.com/sdk/js/2.5.6/wilddog-auth.js"></script>
+<!--<script type="text/javascript" src='./wilddog.js'></script>-->
+<script type="text/javascript" src='https://cdn.wilddog.com/sdk/js/2.0.0/wilddog-video-base.js'></script>
+<script type="text/javascript" src='https://cdn.wilddog.com/sdk/js/2.0.0/wilddog-room.js'></script>
+<script src="https://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+<script type="text/javascript">
+    //获取所使用到的所有元素
+    var roomIdEl = document.getElementById('roomId');
+    var videosEl = document.getElementById('videos');
+    var localEl = document.getElementById('local');
+    var loginDiv = document.getElementById('getAppid-div');
+    var operateBtn = document.getElementById('operateBtn');
+    var localStream = null;
+    var roomId = null;
+    var remoteStream = null;
+
+    var config = {
+        authDomain: 'wildrtc.wilddog.com'
+    }
+    wilddog.initializeApp(config);
+    //获取Room对象
+    var roomInstance;
+    //页面初始化后，自动匿名登录;
+    wilddog.auth().signInAnonymously().then(function(user) {
+        var wilddogBase = wilddogVideoBase.getInstance();
+        wilddogBase.initialize('wildrtc',user.getToken());
+        wilddogBase.createLocalStream({
+            captureVideo: true,
+            captureAudio: true,
+            dimension : '480p',
+            maxFPS: 15
+        }).then(function(wdStream) {
+            localStream = wdStream;
+            //localStream.attach(localEl);
+        }).catch(function(err) {
+            console.error(err);
+        });
+    }).catch(function(err) {
+        console.log(err);
+        console.error('请检查appid是否正确并开启匿名登录功能！');
+    });
+    var disconnect = function () {
+        roomInstance.disconnect();
+        this.location.href = 'https://localhost:8080';
+    };
+    var startRecord = function () {
+        roomInstance.startRecording(function (file,error) {
+            if(error == null){
+                alert('开始录制,录制地址已打印到控制台，请到控制台查看');
+                console.log('https://bt-sh-record.wilddog.com/' + file);
+            }else{
+                alert('开启录制失败');
+            }
+        })
+    };
+    var stopRecord = function () {
+        roomInstance.stopRecording(function (file,error) {
+            if(error == null){
+                alert('开始录制,录制地址已打印到控制台，请到控制台查看');
+                var filename = file.replace(/mkv/,'mp4');
+                console.log('https://bt-sh-record.wilddog.com/' + filename);
+
+            }else{
+                console.log('停止录制失败');
+            }
+        })
+    };
+    /*var publish = function (localStream) {
+        roomInstance.publish(localStream,function(error){
+            if(error == null){
+                console.log('publish success');
+                localStream.attach(localEl);
+            }else{
+                console.log('publish error' + error);
+            }
+        });
+    };
+
+    var unpublish = function (localStream) {
+        roomInstance.unpublish(localStream,function (error) {
+            if(error == null){
+                console.log('unpublish success');
+                if (localStream) {
+                    localStream.detach(localEl);
+                }
+            }
+        });
+    };
+    var unsubscribe = function (roomStream) {
+        roomInstance.unsubscribe(roomStream,function (error) {
+            if(error == null){
+                console.log('unsubscribe success');
+                var removeEl = document.getElementById(roomStream.streamId);
+                if (roomStream) {
+                    roomStream.detach(removeEl);
+                }
+                $(removeEl).parent('.videos-item').remove()
+            }
+        })
+    };
+    var subscribe = function (roomStream) {
+        roomInstance.subscribe(roomStream,function (error) {
+            if(error == null){
+                console.log('subscribe success');
+            }
+        })
+    };*/
+    /**
+     * wilddogRoom用法：
+     * 引入base包  wilddog-video-base.js 存在 wilddogVideoBase，wilddogLocalStream变量
+     * 获取base包单例对象并初始化 wilddogVideoBase.getInstance().initialize(appId,token);
+     *  并创建本地音视频资源wilddogLocalStream.create(options)
+     * 引入room包  wilddogRoom
+     *
+     * */
+        //加入房间
+    var join = function() {
+            //拿到房间号
+        operateBtn.hidden = false;
+        roomId = roomIdEl.value;
+        roomInstance = new wilddogRoom(roomId);
+        //匿名登录成功了
+        loginDiv.hidden = true;
+        videosEl.hidden = false;
+        //Client初始化操作，执行必须在匿名登录之后进行，client的其他函数必须在init成功后才可调用
+        roomInstance.connect();
+        /*roomInstance.publish(localStream,false,function(msg){
+             if(msg == null){
+                console.log('publish success');
+                localStream.attach(localEl);
+             }else{
+                console.log('publish error' + msg);
+             }
+        });*/
+        roomInstance.on('connected',function () {
+            console.log('connected success');
+            roomInstance.publish(localStream,function(error){
+                if(error == null){
+                    console.log('publish success');
+                    localStream.attach(localEl);
+                    localEl.setAttribute('muted','');
+                }else{
+                    console.log('publish error' + error);
+                }
+            });
+            roomInstance.on('stream_added',function (stream) {
+                roomInstance.subscribe(stream.streamId,function (error) {
+                    if(error == null){
+                        console.log('subscribe success');
+                    }
+                });
+            });
+            roomInstance.on('stream_received',function (stream) {
+                var newRemote = $('.videos-item').eq(1).clone(true);
+                remoteStream = stream;
+                //newRemote.hidden = false;
+                newRemote[0].style.display = 'inline-block';
+                newRemote.find('video').attr('id',stream.streamOwners);
+                videosEl.appendChild(newRemote[0]);
+                stream.attach(newRemote.find('video')[0]);
+            });
+
+            roomInstance.on('stream_removed',function (stream) {
+                var removeEl = document.getElementById(stream.streamOwners);
+                if (stream) {
+                    stream.detach(removeEl);
+                }
+                $(removeEl).parent('.videos-item').remove()
+
+                /*videosEl.removeChild(removeEl);*/
+            });
+            roomInstance.on('disconnected',function () {
+                console.log('disconnected room')
+            })
+        });
+    };
+
+    $('.videos-item .btn').click(function () {
+        var canvas = document.createElement('canvas');
+        var videoEl = $(this).siblings('video')[0]
+        canvas.getContext('2d').drawImage(videoEl, 0, 0, canvas.width = videoEl.videoWidth, canvas.height = videoEl.videoHeight);
+        var dataURL = canvas.toDataURL('image/jpeg')
+        var userId = $(this).siblings('video').attr('id')
+        var formData = new FormData();
+        formData.append('base64', dataURL);
+        formData.append('userId', userId);
+        console.log(dataURL,userId);
+//         $.ajax({
+//             url: '',
+//             type: 'POST',
+//             data: formData,
+//             dataType: 'json',
+//             processData: false,
+//             contentType: false,
+//             success: function(data) {
+//
+//             },
+//             error: function(err) {
+//
+//             }
+//         });
+    })
+
+</script>
+</body>
+
+</html>
