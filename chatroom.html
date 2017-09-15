@@ -50,10 +50,6 @@
     <button id="login" onclick="join()" style="height:35px;width:70px;border: 1px solid;border-radius: 3px;cursor:pointer">进入</button>
 </div>
 <div id="operateBtn" hidden >
-    <!--<a id="publish" onclick="publish(localStream)" style="padding-right: 10px;cursor: pointer;">发布本地流</a>
-    <a id="unpublish" onclick="unpublish(localStream);" style="padding-right: 10px;cursor: pointer;">停止发布</a>
-    <a id="subscribe" onclick="subscribe(remoteStream)" style="padding-right: 10px;cursor: pointer;">订阅远端流</a>
-    <a id="unsubscribe" onclick="unsubscribe(remoteStream);" style="padding-right: 10px;cursor: pointer;">停止订阅</a-->
     <a id="startRecord" onclick="startRecord()" style="padding-right: 10px;cursor: pointer;">开始录制</a>
     <a id="stopRecord" onclick="stopRecord()" style="padding-right: 10px;cursor: pointer;">结束录制</a>
     <a id="disconnect" onclick="disconnect()" style="padding-right: 10px;cursor: pointer;">离开会议</a>
@@ -93,9 +89,8 @@
     var roomInstance;
     //页面初始化后，自动匿名登录;
     wilddog.auth().signInAnonymously().then(function(user) {
-        var wilddogBase = wilddogVideoBase.getInstance();
-        wilddogBase.initialize('wildrtc',user.getToken());
-        wilddogBase.createLocalStream({
+        wilddogVideo.initialize({'appId':'wildrtc','token':user.getToken()});
+        wilddogVideo.createLocalStream({
             captureVideo: true,
             captureAudio: true,
             dimension : '480p',
@@ -136,52 +131,11 @@
             }
         })
     };
-    /*var publish = function (localStream) {
-        roomInstance.publish(localStream,function(error){
-            if(error == null){
-                console.log('publish success');
-                localStream.attach(localEl);
-            }else{
-                console.log('publish error' + error);
-            }
-        });
-    };
-
-    var unpublish = function (localStream) {
-        roomInstance.unpublish(localStream,function (error) {
-            if(error == null){
-                console.log('unpublish success');
-                if (localStream) {
-                    localStream.detach(localEl);
-                }
-            }
-        });
-    };
-    var unsubscribe = function (roomStream) {
-        roomInstance.unsubscribe(roomStream,function (error) {
-            if(error == null){
-                console.log('unsubscribe success');
-                var removeEl = document.getElementById(roomStream.streamId);
-                if (roomStream) {
-                    roomStream.detach(removeEl);
-                }
-                $(removeEl).parent('.videos-item').remove()
-            }
-        })
-    };
-    var subscribe = function (roomStream) {
-        roomInstance.subscribe(roomStream,function (error) {
-            if(error == null){
-                console.log('subscribe success');
-            }
-        })
-    };*/
     /**
-     * wilddogRoom用法：
-     * 引入base包  wilddog-video-base.js 存在 wilddogVideoBase，wilddogLocalStream变量
-     * 获取base包单例对象并初始化 wilddogVideoBase.getInstance().initialize(appId,token);
-     *  并创建本地音视频资源wilddogLocalStream.create(options)
-     * 引入room包  wilddogRoom
+     * WilddogRoom用法：
+     * 在使用WilddogRoom前需要初始化,wilddogVideo.initialize({appId:<appId>,token:<token>})	
+     * 通过wilddogVideo创建本地音视频资源wilddogLocalStream.create(options)
+     * wilddogVideo是统一入口，通过wilddogVideo.room(roomId)获取Room实例
      *
      * */
         //加入房间
@@ -189,20 +143,12 @@
             //拿到房间号
         operateBtn.hidden = false;
         roomId = roomIdEl.value;
-        roomInstance = new wilddogRoom(roomId);
+        roomInstance = wilddogVideo.room(roomId);
         //匿名登录成功了
         loginDiv.hidden = true;
         videosEl.hidden = false;
         //Client初始化操作，执行必须在匿名登录之后进行，client的其他函数必须在init成功后才可调用
         roomInstance.connect();
-        /*roomInstance.publish(localStream,false,function(msg){
-             if(msg == null){
-                console.log('publish success');
-                localStream.attach(localEl);
-             }else{
-                console.log('publish error' + msg);
-             }
-        });*/
         roomInstance.on('connected',function () {
             console.log('connected success');
             roomInstance.publish(localStream,function(error){
@@ -251,11 +197,11 @@
         var videoEl = $(this).siblings('video')[0]
         canvas.getContext('2d').drawImage(videoEl, 0, 0, canvas.width = videoEl.videoWidth, canvas.height = videoEl.videoHeight);
         var dataURL = canvas.toDataURL('image/jpeg')
-        var userId = $(this).siblings('video').attr('id')
+        var streamId = $(this).siblings('video').attr('id')
         var formData = new FormData();
         formData.append('base64', dataURL);
-        formData.append('userId', userId);
-        console.log(dataURL,userId);
+        formData.append('streamId', streamId);
+        console.log(dataURL,streamId);
 //         $.ajax({
 //             url: '',
 //             type: 'POST',
@@ -271,7 +217,6 @@
 //             }
 //         });
     })
-
 </script>
 </body>
 
