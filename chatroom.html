@@ -85,16 +85,10 @@
     var roomInstance;
     //页面初始化后，自动匿名登录;
     wilddog.auth().signInAnonymously().then(function(user) {
-        /*var wilddogBase = wilddogVideoBase.getInstance();
-         wilddogBase.initialize('wildrtc',user.getToken());
-         wilddogBase.createLocalStream({*/
         wilddogVideo.initialize({appId:'wildrtc',token:user.getToken()});
         wilddogVideo.createLocalStream({
-            captureVideo: true,
-            captureAudio: true,
-            dimension : '480p',
-            mediaSource: 'window',
-            maxFPS: 15
+            mediaSource: 'window'
+
         }).then(function(wdStream) {
             localStream = wdStream;
             //localStream.attach(localEl);
@@ -124,7 +118,6 @@
             if(error == null){
                 console.log('publish success');
                 localStream.attach(localEl);
-                console.log(localStream.streamId);
             }else{
                 console.log('publish error' + error);
             }
