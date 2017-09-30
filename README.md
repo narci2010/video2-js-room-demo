@@ -5,7 +5,7 @@
 
 	node https_channel_server.js
 
-2. 当3000端口没有被占用时，可以在浏览器中输入：https://localhost:3000来访问，如果3000端口被占用了，可以通过修改https_channel_server.js文件来更改demo使用的端口。
+2. 当3000端口没有被占用时，可以在浏览器中输入：https://localhost:8080来访问，如果8080端口被占用了，可以通过修改https_channel_server.js文件来更改demo使用的端口。
 
 ## 文档：
 
