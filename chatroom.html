@@ -78,14 +78,14 @@
     var remoteStream = null;
 
     var config = {
-        authDomain: 'wildrtc.wilddog.com',
+        authDomain: 'wd0971274579citqzg.wilddog.com',
     }
     wilddog.initializeApp(config);
     //获取Room对象
     var roomInstance;
     //页面初始化后，自动匿名登录;
     wilddog.auth().signInAnonymously().then(function(user) {
-        wilddogVideo.initialize({appId:'wildrtc',token:user.getToken()});
+        wilddogVideo.initialize({appId:'wd0971274579citqzg',token:user.getToken()});
         wilddogVideo.createLocalStream({
             mediaSource: 'window'
 
